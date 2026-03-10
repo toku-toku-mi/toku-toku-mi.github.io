@@ -1059,8 +1059,17 @@ function showHelp() {
 }
 
 function closeHelp() {
-  showScreen('scr-config');
-  checkSavedSettings();
+  alert('closeHelp() が呼ばれました');
+  console.log('closeHelp() 実行開始');
+  try {
+    showScreen('scr-config');
+    console.log('showScreen完了');
+    checkSavedSettings();
+    console.log('checkSavedSettings完了');
+  } catch (error) {
+    console.error('closeHelpエラー:', error);
+    alert('エラー: ' + error.message);
+  }
 }
 
 function checkSavedSettings() {
