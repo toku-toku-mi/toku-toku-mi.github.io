@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🏇 クイズダービー</title>
+<meta name="description" content="班対抗でコインを賭けて競うクイズゲーム">
+<meta name="theme-color" content="#f5c518">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Kaisei+Decol:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dark: #0d1117;
+  --card: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --gold: #f5c518;
+  --green: #3fb950;
+  --green-light: #7ee787;
+  --red: #f85149;
+  --blue: #58a6ff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  background: var(--dark);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+.header {
+  text-align: center;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
+  border-bottom: 3px solid var(--gold);
+  margin-bottom: 30px;
+}
+.logo {
+  font-family: 'Kaisei Decol', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(245,197,24,.3);
+  margin-bottom: 8px;
+}
+.subtitle { color: var(--text-dim); font-size: .95rem; }
+
+/* SCREEN */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* CARD */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: .85rem;
+  font-weight: 700;
+}
+.tag-g { background: var(--green); color: var(--dark); }
+.tag-b { background: var(--blue); color: var(--dark); }
+.dim { color: var(--text-dim); }
+
+/* BUTTON */
+.btn {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-gold {
+  background: var(--gold);
+  color: var(--dark);
+}
+.btn-gold:hover {
+  background: #ffd700;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245,197,24,.4);
+}
+.btn-ghost {
+  background: transparent;
+  border: 2px solid var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.btn-sm { padding: 8px 18px; font-size: .9rem; }
+.btn-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* CONFIG SCREEN */
+.config-section {
+  margin-bottom: 24px;
+}
+.config-label {
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
+.config-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+}
+.race-config-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.race-config-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 100px;
+  gap: 12px;
+  align-items: center;
+}
+
+/* SETUP */
+.horse-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.h-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.horse-input input {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+/* ROULETTE */
+.roulette-window {
+  height: 240px;
+  overflow: hidden;
+  position: relative;
+  background: var(--dark);
+  border-radius: 12px;
+  border: 2px solid var(--gold);
+  margin-bottom: 20px;
+}
+.roulette-pointer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 20px);
+  height: 80px;
+  border: 3px solid var(--gold);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 0 30px rgba(245,197,24,.5);
+}
+.roulette-drum {
+  display: flex;
+  flex-direction: column;
+  padding: 80px 0;
+}
+.rl-item {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.rl-item.selected {
+  background: var(--gold);
+  color: var(--dark);
+}
+.roulette-result {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, var(--gold) 0%, #ffd700 100%);
+  color: var(--dark);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 900;
+  box-shadow: 0 4px 20px rgba(245,197,24,.4);
+}
+.roulette-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.rl-list-item {
+  padding: 12px;
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-weight: 600;
+}
+.rl-list-item.selected {
+  background: var(--gold);
+  color: var(--dark);
+  border-color: var(--gold);
+}
+
+/* ODDS BOARD */
+.odds-board {
+  background: var(--dark);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+.odds-head {
+  display: grid;
+  grid-template-columns: 50px 2fr 1fr 1fr 2fr;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(245,197,24,.1);
+  font-weight: 700;
+  font-size: .85rem;
+  color: var(--gold);
+}
+.odds-row {
+  display: grid;
+  grid-template-columns: 50px 2fr 1fr 1fr 2fr;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  align-items: center;
+}
+.odds-val {
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+.odds-val.low { color: var(--green-light); }
+.odds-val.high { color: var(--red); }
+.bar-wrap {
+  background: var(--border);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--gold);
+  transition: width .3s;
+}
+
+/* BETTING */
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.team-card {
+  padding: 16px;
+  background: var(--dark);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+.team-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+.team-card.active {
+  border-color: var(--gold);
+  background: rgba(245,197,24,.1);
+}
+.team-card.confirmed {
+  border-color: var(--green);
+  background: rgba(63,185,80,.1);
+}
+.team-card.no-coins {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--red);
+}
+.team-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.team-coins {
+  font-size: .85rem;
+  color: var(--text-dim);
+}
+.bet-panel {
+  background: var(--dark);
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+.remain-tag {
+  background: rgba(245,197,24,.1);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.bet-horse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.bet-horse-btn {
+  padding: 12px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+  font-weight: 700;
+}
+.bet-horse-btn:hover {
+  border-color: var(--gold);
+}
+.bet-horse-btn.active {
+  border-color: var(--gold);
+  background: rgba(245,197,24,.1);
+}
+.coin-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+.c-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  background: transparent;
+  color: var(--gold);
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+.c-btn:hover {
+  background: var(--gold);
+  color: var(--dark);
+}
+.c-num {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--gold);
+  min-width: 60px;
+  text-align: center;
+}
+
+/* RACE */
+.timer-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+.timer-display {
+  font-size: 6rem;
+  font-weight: 900;
+  font-family: 'Kaisei Decol', serif;
+  color: var(--gold);
+  text-shadow: 0 4px 20px rgba(245,197,24,.3);
+  transition: color .3s;
+}
+.timer-display.warn {
+  color: #ffd700;
+}
+.timer-display.danger {
+  color: var(--red);
+  animation: pulse 1s infinite;
+}
+#goal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  flex-direction: column;
+  gap: 20px;
+}
+.goal-text {
+  font-size: 6rem;
+  font-weight: 900;
+  color: var(--gold);
+  font-family: 'Kaisei Decol', serif;
+  text-shadow: 0 0 40px rgba(245,197,24,.6);
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* SCORE INPUT */
+.score-grid {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+.score-card {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.score-card input {
+  width: 80px;
+  padding: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* RESULT */
+.podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  margin: 30px 0;
+}
+.podium-place {
+  text-align: center;
+  padding: 20px 16px;
+  border-radius: 12px;
+  min-width: 140px;
+}
+.p1 {
+  background: linear-gradient(135deg, #ffd700 0%, #f5c518 100%);
+  color: var(--dark);
+  order: 2;
+  transform: translateY(-20px);
+}
+.p2 {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%);
+  color: var(--dark);
+  order: 1;
+}
+.p3 {
+  background: linear-gradient(135deg, #cd7f32 0%, #b8751f 100%);
+  color: var(--dark);
+  order: 3;
+}
+.p-rank {
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.p-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.p-score {
+  font-size: 1rem;
+  opacity: .8;
+}
+.res-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+.res-table th {
+  background: rgba(245,197,24,.1);
+  color: var(--gold);
+  padding: 12px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 2px solid var(--border);
+}
+.res-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.res-table tr.r1 { background: rgba(255,215,0,.1); }
+.res-table tr.r2 { background: rgba(192,192,192,.1); }
+.res-table tr.r3 { background: rgba(205,127,50,.1); }
+.payout-card {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.payout-team {
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.payout-amount {
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+.payout-amount.win { color: var(--green-light); }
+.payout-amount.lose { color: var(--red); }
+
+/* FINAL */
+.champion-banner {
+  background: linear-gradient(135deg, var(--gold) 0%, #ffd700 100%);
+  color: var(--dark);
+  padding: 40px 20px;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 30px rgba(245,197,24,.4);
+}
+.champ-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.champ-name {
+  font-size: 3rem;
+  font-weight: 900;
+  font-family: 'Kaisei Decol', serif;
+}
+/* SLIDER */
+#coin-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: var(--gold);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(245,197,24,.5);
+}
+#coin-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--gold);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(245,197,24,.5);
+}
+/* HELP BUTTON */
+.help-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--dark);
+  border: none;
+  font-size: 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(245,197,24,.4);
+  z-index: 1000;
+  transition: transform .2s;
+  pointer-events: auto;
+}
+.help-btn:hover { transform: scale(1.1); }
+.help-btn:active { transform: scale(0.95); }
+/* HOW TO PLAY */
+.howto-step {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.howto-num {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--dark);
+  font-weight: 700;
+  text-align: center;
+  line-height: 32px;
+  margin-right: 12px;
+}
+.howto-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.howto-desc {
+  color: var(--text-dim);
+  font-size: .9rem;
+}
+.tips-box {
+  background: linear-gradient(135deg, rgba(245,197,24,.1) 0%, rgba(245,197,24,.05) 100%);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.tips-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo">🏇 クイズダービー</div>
+    <div class="subtitle">Quiz Derby Game</div>
+  </div>
+
+  <!-- HELP BUTTON -->
+  <button class="help-btn" onclick="toggleHelp()" id="help-btn" title="遊び方">？</button>
+
+  <!-- HOW TO PLAY SCREEN -->
+  <div class="screen" id="scr-howto">
+    <div class="card">
+      <div class="card-title">📖 遊び方</div>
+      
+      <div class="howto-step">
+        <div style="display:flex;align-items:flex-start">
+          <span class="howto-num">1</span>
+          <div style="flex:1">
+            <div class="howto-title">⚙️ 準備</div>
+            <div class="howto-desc">レース数・班数・初期コイン・解答時間を設定</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="howto-step">
+        <div style="display:flex;align-items:flex-start">
+          <span class="howto-num">2</span>
+          <div style="flex:1">
+            <div class="howto-title">🎰 ルーレット</div>
+            <div class="howto-desc">お題をルーレットで決定（カスタムで自由入力も可能）</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="howto-step">
+        <div style="display:flex;align-items:flex-start">
+          <span class="howto-num">3</span>
+          <div style="flex:1">
+            <div class="howto-title">🪙 投票</div>
+            <div class="howto-desc">各班がコインを賭ける。オッズが表示されるので戦略的に！</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="howto-step">
+        <div style="display:flex;align-items:flex-start">
+          <span class="howto-num">4</span>
+          <div style="flex:1">
+            <div class="howto-title">🏁 レース</div>
+            <div class="howto-desc">参加者がお題に沿ってクイズに答える（制限時間内）</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="howto-step">
+        <div style="display:flex;align-items:flex-start">
+          <span class="howto-num">5</span>
+          <div style="flex:1">
+            <div class="howto-title">🏆 結果</div>
+            <div class="howto-desc">正解数で順位決定。的中した班に配当が入る！</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="howto-step">
+        <div style="display:flex;align-items:flex-start">
+          <span class="howto-num">6</span>
+          <div style="flex:1">
+            <div class="howto-title">👑 優勝</div>
+            <div class="howto-desc">全レース終了後、最もコインを持っている班が優勝🎉</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tips-box">
+        <div class="tips-title">💡 コツ</div>
+        <ul style="margin-left:20px;color:var(--text-dim);font-size:.9rem;line-height:1.8">
+          <li>オッズが高い馬は当たると大きい配当！</li>
+          <li>スライダーで素早く投票できます</li>
+          <li>全部賭けるとハイリスク・ハイリターン</li>
+        </ul>
+      </div>
+
+      <div class="btn-row" style="margin-top:24px">
+        <button class="btn btn-gold" onclick="closeHelp()">ゲームを始める</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: CONFIG ═══ -->
+  <div class="screen active" id="scr-config">
+    <div class="card">
+      <div class="card-title">⚙️ ゲーム設定</div>
+      
+      <div class="config-section">
+        <div class="config-label">レース数</div>
+        <input type="number" class="config-input" id="race-count" value="4" min="1" max="10">
+      </div>
+
+      <div class="config-section">
+        <div class="config-label">班の数</div>
+        <input type="number" class="config-input" id="team-count" value="14" min="1" max="30">
+      </div>
+
+      <div class="config-section">
+        <div class="config-label">初期コイン（班ごと）</div>
+        <input type="number" class="config-input" id="initial-coins" value="5" min="1" max="100">
+      </div>
+
+      <div class="config-section">
+        <div class="config-label">解答時間（秒）</div>
+        <input type="number" class="config-input" id="race-time" value="60" min="30" max="300">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="startConfig()">次へ：レース詳細設定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: RACE CONFIG ═══ -->
+  <div class="screen" id="scr-race-config">
+    <div class="card">
+      <div class="card-title">📋 各レースの設定</div>
+      <div id="race-config-list"></div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="finishRaceConfig()">設定完了：ゲーム開始</button>
+        <button class="btn btn-ghost" onclick="backToConfig()">戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: SETUP ═══ -->
+  <div class="screen" id="scr-setup">
+    <div class="card">
+      <div class="card-title">📝 出走馬の名前入力</div>
+      <div class="info-row">
+        <span class="tag tag-g" id="setup-race-label">第1レース</span>
+        <span class="tag tag-b" id="setup-horse-count-label">5人</span>
+      </div>
+      <div id="setup-grid"></div>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="goRoulette()">次へ：ルーレット</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: ROULETTE ═══ -->
+  <div class="screen" id="scr-roulette">
+    <audio id="roulette-bgm">
+      <source src="./電子ルーレット.mp3" type="audio/mpeg">
+    </audio>
+    <div class="card">
+      <div class="card-title">🎰 お題ルーレット</div>
+      <div class="info-row">
+        <span class="tag tag-g" id="roulette-race-label">第1レース</span>
+      </div>
+      <div class="roulette-window">
+        <div class="roulette-pointer"></div>
+        <div class="roulette-drum" id="roulette-drum"></div>
+      </div>
+      <div id="roulette-result-area"></div>
+      <div class="roulette-list" id="roulette-list"></div>
+      <div class="btn-row">
+        <button class="btn btn-gold" id="spin-btn" onclick="spinRoulette()">回す！</button>
+        <button class="btn btn-ghost" id="next-bet-btn" style="display:none" onclick="goBetting()">次へ：投票</button>
+        <button class="btn btn-ghost" id="respin-btn" style="display:none" onclick="resetRoulette()">もう一度</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: BET ═══ -->
+  <div class="screen" id="scr-bet">
+    <div class="card">
+      <div class="card-title">📊 現在のオッズ</div>
+      <div class="info-row">
+        <span class="tag tag-g" id="bet-race-label">第1レース</span>
+      </div>
+      <div class="odds-board">
+        <div class="odds-head">
+          <div>#</div><div>名前</div><div style="text-align:center">オッズ</div><div style="text-align:center">コイン</div><div>投票率</div>
+        </div>
+        <div id="odds-list"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🪙 班ごとに投票</div>
+      <div class="team-grid" id="team-grid"></div>
+      <div id="bet-panel" style="display:none">
+        <div class="bet-panel">
+          <div style="font-weight:700;color:var(--gold);margin-bottom:6px" id="bet-team-label"></div>
+          <div class="remain-tag">残りコイン: <span id="remain-coins">5</span> / <span id="total-coins">5</span>枚</div>
+          <div class="bet-horse-grid" id="bet-horse-grid"></div>
+          <div id="coin-sel-area" style="display:none;margin-top:8px">
+            <div style="color:var(--text-dim);font-size:.85rem;margin-bottom:6px">
+              選択中: <span id="sel-horse-name" style="color:var(--gold);font-weight:700"></span>
+            </div>
+            <input type="range" id="coin-slider" min="0" max="5" value="0" 
+                   oninput="sliderChange(this.value)" 
+                   style="width:100%;height:8px;margin:12px 0;cursor:pointer;
+                          background:linear-gradient(to right,var(--gold) 0%,var(--border) 0%);
+                          border-radius:4px;outline:none;appearance:none;-webkit-appearance:none">
+            <div class="coin-ctrl">
+              <button class="c-btn" onclick="coinDelta(-1)">－</button>
+              <div class="c-num" id="coin-num">0</div>
+              <span style="color:var(--text-dim)">枚</span>
+              <button class="c-btn" onclick="coinDelta(1)">＋</button>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-gold btn-sm" onclick="confirmTeam()">✅ この班の投票を確定</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetTeam()">リセット</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="goRace()">投票完了：レース開始</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: RACE ═══ -->
+  <div class="screen" id="scr-race">
+    <audio id="race-bgm" loop>
+      <source src="./天国と地獄.m4a" type="audio/mp4">
+    </audio>
+    <div id="goal-overlay">
+      <div class="goal-text">GOAL!!</div>
+    </div>
+    <div class="card">
+      <div class="card-title" id="race-title">🏁 第1レース</div>
+      <div class="info-row">
+        <span class="tag tag-g" id="race-theme">お題: ---</span>
+      </div>
+    </div>
+    <div id="phase-timer">
+      <div class="timer-wrap">
+        <div class="timer-display" id="timer-display">1:00</div>
+      </div>
+      <div class="btn-row" id="ctrl-row" style="justify-content:center">
+        <button class="btn btn-gold" onclick="startAllRace()">🚀 スタート！</button>
+      </div>
+    </div>
+    <div id="phase-input" style="display:none">
+      <div class="card">
+        <div class="card-title">✏️ 正解数を入力</div>
+        <div class="score-grid" id="score-grid"></div>
+        <div class="btn-row">
+          <button class="btn btn-gold" onclick="showRaceResult()">結果を見る</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="race-odds-card" style="display:none">
+      <div class="card-title">📊 レース中オッズ</div>
+      <div class="odds-board">
+        <div class="odds-head">
+          <div>#</div><div>名前</div><div style="text-align:center">オッズ</div><div style="text-align:center">コイン</div><div>投票率</div>
+        </div>
+        <div id="race-odds-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: RACE RESULT ═══ -->
+  <div class="screen" id="scr-rresult">
+    <div class="card">
+      <div class="card-title" id="rr-race-label">🏆 第1レース結果</div>
+      <div class="podium" id="podium"></div>
+      <table class="res-table">
+        <thead><tr><th>順位</th><th>名前</th><th>正解数</th></tr></thead>
+        <tbody id="rank-tbody"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">💰 配当結果</div>
+      <div id="payout-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏦 現在の所持コイン</div>
+      <div id="coins-board"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="next-race-btn" onclick="nextRace()">次のレースへ</button>
+      <button class="btn btn-gold" id="final-btn" style="display:none" onclick="showFinalResult()">最終結果を見る</button>
+    </div>
+  </div>
+
+  <!-- ═══ SCREEN: FINAL RESULT ═══ -->
+  <div class="screen" id="scr-final">
+    <div class="champion-banner">
+      <div class="champ-label">🏆 総合優勝 🏆</div>
+      <div style="font-size:2.5rem">🎉</div>
+      <div class="champ-name" id="final-champ-team">---</div>
+      <div style="color:rgba(0,0,0,.6);margin-top:8px;font-size:1.1rem">
+        所持コイン: <span id="final-champ-coins" style="color:rgba(0,0,0,.8);font-weight:700">---</span>枚
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏅 班別 最終ランキング</div>
+      <table class="res-table" id="final-team-table">
+        <thead><tr><th>順位</th><th>班</th><th>所持コイン</th><th>初期</th><th>増減</th></tr></thead>
+        <tbody id="final-team-tbody"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">🐴 全レース結果サマリー（出走馬）</div>
+      <table class="res-table" id="final-table">
+        <thead><tr><th>レース</th><th>1着</th><th>正解数</th><th>2着</th><th>3着</th></tr></thead>
+        <tbody id="final-tbody"></tbody>
+      </table>
+    </div>
+    <div class="btn-row" style="justify-content:center;margin-top:10px">
+      <button class="btn btn-gold" onclick="restartAll()">🔄 もう一度！</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ════════════════════════════
+//  HELP & NAVIGATION
+// ════════════════════════════
+function toggleHelp() {
+  const howtoScreen = document.getElementById('scr-howto');
+  const configScreen = document.getElementById('scr-config');
+  
+  if (howtoScreen.classList.contains('active')) {
+    closeHelp();
+  } else {
+    howtoScreen.classList.add('active');
+    configScreen.classList.remove('active');
+  }
+}
+
+function closeHelp() {
+  const howtoScreen = document.getElementById('scr-howto');
+  const configScreen = document.getElementById('scr-config');
+  
+  howtoScreen.classList.remove('active');
+  configScreen.classList.add('active');
+}
+
+// ════════════════════════════
+//  STATE
+// ════════════════════════════
+let RACE_COUNT = 4;
+let TEAM_COUNT = 14;
+let COINS_EACH = 5;
+let RACE_SEC = 60;
+const CIRC = 270.18;
+
+let RACE_CONFIG = [];
+let ROULETTE_DATA = [];
+
+let curRace = 0;
+let raceHorses = [];
+let raceBets = {};
+let raceConfirmed = new Set();
+let raceResults = [];
+let teamHoldings = [];
+let allRaceResults = [];
+
+let rouletteSpinning = false;
+let rouletteResult = -1;
+
+let curTeam = -1;
+let selHorse = -1;
+let teamBets = {};
+
+let timerInt = null;
+let timeLeft = RACE_SEC;
+let running = false;
+let spaceDown = false;
+
+// ════════════════════════════
+//  CONFIG
+// ════════════════════════════
+function startConfig() {
+  RACE_COUNT = parseInt(document.getElementById('race-count').value) || 4;
+  TEAM_COUNT = parseInt(document.getElementById('team-count').value) || 14;
+  COINS_EACH = parseInt(document.getElementById('initial-coins').value) || 5;
+  RACE_SEC = parseInt(document.getElementById('race-time').value) || 60;
+
+  RACE_CONFIG = [];
+  ROULETTE_DATA = [];
+  for (let i = 0; i < RACE_COUNT; i++) {
+    RACE_CONFIG.push({ label: `第${i + 1}レース`, count: 5, names: [] });
+    ROULETTE_DATA.push(['お題1', 'お題2', 'お題3', 'お題4', 'お題5', 'お題6']);
+  }
+
+  buildRaceConfigScreen();
+  setScreen('race-config');
+}
+
+function buildRaceConfigScreen() {
+  const list = document.getElementById('race-config-list');
+  list.innerHTML = '';
+  RACE_CONFIG.forEach((rc, i) => {
+    const section = document.createElement('div');
+    section.className = 'config-section';
+    section.innerHTML = `
+      <div class="config-label">${rc.label}</div>
+      <div class="race-config-row">
+        <div>出走馬数:</div>
+        <input type="number" class="config-input" id="rc-count-${i}" value="${rc.count}" min="1" max="20">
+        <div></div>
+      </div>
+      <div style="margin-top:8px;color:var(--text-dim);font-size:.9rem">ルーレットお題（カンマ区切り、6個推奨）</div>
+      <input type="text" class="config-input" id="rc-topics-${i}" value="${rc.topics || ROULETTE_DATA[i].join(',')}" placeholder="お題1,お題2,お題3,...">
+    `;
+    list.appendChild(section);
+  });
+}
+
+function finishRaceConfig() {
+  RACE_CONFIG.forEach((rc, i) => {
+    rc.count = parseInt(document.getElementById(`rc-count-${i}`).value) || 5;
+    const topicsStr = document.getElementById(`rc-topics-${i}`).value.trim();
+    ROULETTE_DATA[i] = topicsStr ? topicsStr.split(',').map(s => s.trim()) : ['お題1', 'お題2', 'お題3', 'お題4', 'お題5', 'お題6'];
+  });
+
+  teamHoldings = Array(TEAM_COUNT).fill(COINS_EACH);
+  allRaceResults = [];
+  curRace = 0;
+
+  init();
+}
+
+function backToConfig() {
+  setScreen('config');
+}
+
+// ════════════════════════════
+//  INIT
+// ════════════════════════════
+function init() {
+  raceHorses = [];
+  raceBets = {};
+  raceConfirmed.clear();
+  raceResults = [];
+  rouletteResult = -1;
+  buildSetupScreen();
+  setScreen('setup');
+}
+
+function buildSetupScreen() {
+  const cfg = RACE_CONFIG[curRace];
+  document.getElementById('setup-race-label').textContent = cfg.label;
+  document.getElementById('setup-horse-count-label').textContent = `${cfg.count}人`;
+
+  const grid = document.getElementById('setup-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < cfg.count; i++) {
+    const defaultName = cfg.names?.[i] || '';
+    grid.innerHTML += `
+      <div class="horse-input">
+        <div class="h-num">${i + 1}</div>
+        <input type="text" placeholder="名前" id="hn-${i}" value="${defaultName}">
+      </div>`;
+  }
+}
+
+// ════════════════════════════
+//  ROULETTE
+// ════════════════════════════
+function goRoulette() {
+  const cfg = RACE_CONFIG[curRace];
+  raceHorses = [];
+  for (let i = 0; i < cfg.count; i++) {
+    const v = document.getElementById(`hn-${i}`)?.value || `馬${i + 1}`;
+    raceHorses.push({ num: i + 1, name: v });
+  }
+  buildRouletteScreen();
+  setScreen('roulette');
+}
+
+function buildRouletteScreen() {
+  document.getElementById('roulette-race-label').textContent = RACE_CONFIG[curRace].label;
+  const items = ROULETTE_DATA[curRace];
+  const drum = document.getElementById('roulette-drum');
+  drum.innerHTML = '';
+  for (let i = 0; i < 20; i++) {
+    items.forEach(t => {
+      drum.innerHTML += `<div class="rl-item">${t}</div>`;
+    });
+  }
+  const list = document.getElementById('roulette-list');
+  list.innerHTML = '';
+  items.forEach((t, i) => {
+    list.innerHTML += `<div class="rl-list-item" id="rll-${i}">${t}</div>`;
+  });
+  document.getElementById('roulette-result-area').innerHTML = '';
+  document.getElementById('spin-btn').style.display = 'inline-block';
+  document.getElementById('next-bet-btn').style.display = 'none';
+  document.getElementById('respin-btn').style.display = 'none';
+  rouletteResult = -1;
+}
+
+function spinRoulette() {
+  if (rouletteSpinning) return;
+  rouletteSpinning = true;
+
+  const bgm = document.getElementById('roulette-bgm');
+  bgm.currentTime = 0;
+  bgm.play().catch(err => console.log('Roulette BGM autoplay blocked:', err));
+
+  const items = ROULETTE_DATA[curRace];
+  const n = items.length;
+  const resultIdx = Math.floor(Math.random() * n);
+  rouletteResult = resultIdx;
+
+  const drum = document.getElementById('roulette-drum');
+  const itemH = 80;
+  const baseRounds = 3;
+  const targetPos = (baseRounds * n + resultIdx) * itemH;
+
+  drum.style.transition = 'none';
+  drum.style.transform = 'translateY(0)';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      drum.style.transition = `transform 3.5s cubic-bezier(.17,.67,.12,1)`;
+      drum.style.transform = `translateY(-${targetPos}px)`;
+    });
+  });
+
+  setTimeout(() => {
+    bgm.pause();
+    bgm.currentTime = 0;
+    showRouletteResult(resultIdx);
+    rouletteSpinning = false;
+  }, 3700);
+}
+
+function showRouletteResult(idx) {
+  const items = ROULETTE_DATA[curRace];
+  document.querySelectorAll('.rl-item').forEach((el, i) => {
+    el.classList.toggle('selected', i % items.length === idx);
+  });
+  document.querySelectorAll('.rl-list-item').forEach((el, i) => {
+    el.classList.toggle('selected', i === idx);
+  });
+  const area = document.getElementById('roulette-result-area');
+  area.innerHTML = `<div class="roulette-result">🎯 ${items[idx]}</div>`;
+  document.getElementById('spin-btn').style.display = 'none';
+  document.getElementById('next-bet-btn').style.display = 'inline-block';
+  document.getElementById('respin-btn').style.display = 'inline-block';
+}
+
+function resetRoulette() {
+  buildRouletteScreen();
+}
+
+// ════════════════════════════
+//  BETTING
+// ════════════════════════════
+function goBetting() {
+  raceBets = {};
+  raceConfirmed.clear();
+  buildBettingScreen();
+  setScreen('bet');
+}
+
+function buildBettingScreen() {
+  document.getElementById('bet-race-label').textContent = RACE_CONFIG[curRace].label;
+  buildOddsBoard();
+  const grid = document.getElementById('team-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < TEAM_COUNT; i++) {
+    const coins = teamHoldings[i];
+    const conf = raceConfirmed.has(i);
+    const noCoin = coins <= 0;
+    const cls = conf ? 'confirmed' : noCoin ? 'no-coins' : '';
+    grid.innerHTML += `
+      <div class="team-card ${cls}" onclick="selectTeam(${i})" id="tc-${i}">
+        <div class="team-name">${i + 1}班</div>
+        <div class="team-coins">所持: ${coins}枚</div>
+        ${conf ? '<div style="color:var(--green);font-size:.8rem;margin-top:4px">✅ 確定</div>' : ''}
+        ${noCoin ? '<div style="color:var(--red);font-size:.8rem;margin-top:4px">コイン不足</div>' : ''}
+      </div>`;
+  }
+  document.getElementById('bet-panel').style.display = 'none';
+}
+
+function selectTeam(t) {
+  if (raceConfirmed.has(t) || teamHoldings[t] <= 0) return;
+  curTeam = t;
+  teamBets = raceBets[t] || {};
+  document.querySelectorAll('.team-card').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tc-${t}`).classList.add('active');
+  buildBetPanel();
+}
+
+function buildBetPanel() {
+  document.getElementById('bet-team-label').textContent = `${curTeam + 1}班`;
+  const totalCoins = teamHoldings[curTeam];
+  const usedCoins = Object.values(teamBets).reduce((a, b) => a + b, 0);
+  const remain = totalCoins - usedCoins;
+  document.getElementById('remain-coins').textContent = remain;
+  document.getElementById('total-coins').textContent = totalCoins;
+
+  const grid = document.getElementById('bet-horse-grid');
+  grid.innerHTML = '';
+  raceHorses.forEach((h, i) => {
+    const bet = teamBets[i] || 0;
+    grid.innerHTML += `
+      <div class="bet-horse-btn ${selHorse === i ? 'active' : ''}" onclick="selectHorse(${i})" id="bh-${i}">
+        <div style="font-weight:700">${h.name}</div>
+        <div style="color:var(--gold);font-size:.85rem;margin-top:4px">${bet}枚</div>
+      </div>`;
+  });
+
+  if (selHorse >= 0) {
+    document.getElementById('coin-sel-area').style.display = 'block';
+    document.getElementById('sel-horse-name').textContent = raceHorses[selHorse].name;
+    document.getElementById('coin-num').textContent = teamBets[selHorse] || 0;
+  } else {
+    document.getElementById('coin-sel-area').style.display = 'none';
+  }
+
+  document.getElementById('bet-panel').style.display = 'block';
+}
+
+function selectHorse(h) {
+  selHorse = h;
+  buildBetPanel();
+  updateSlider();
+}
+
+function coinDelta(d) {
+  if (selHorse < 0) return;
+  const totalCoins = teamHoldings[curTeam];
+  const usedCoins = Object.values(teamBets).reduce((a, b) => a + b, 0);
+  const remain = totalCoins - usedCoins;
+  const cur = teamBets[selHorse] || 0;
+  let nv = cur + d;
+  if (nv < 0) nv = 0;
+  if (d > 0 && remain <= 0) return;
+  if (nv > cur && nv - cur > remain) return;
+  teamBets[selHorse] = nv;
+  updateSlider();
+  buildBetPanel();
+}
+
+function sliderChange(val) {
+  if (selHorse < 0) return;
+  const v = parseInt(val);
+  const totalCoins = teamHoldings[curTeam];
+  const usedCoins = Object.values(teamBets).reduce((a, b) => a + b, 0);
+  const curBet = teamBets[selHorse] || 0;
+  const remain = totalCoins - usedCoins + curBet;
+  if (v > remain) {
+    teamBets[selHorse] = remain;
+  } else {
+    teamBets[selHorse] = v;
+  }
+  updateSlider();
+  buildBetPanel();
+}
+
+function updateSlider() {
+  const slider = document.getElementById('coin-slider');
+  if (!slider) return;
+  const totalCoins = teamHoldings[curTeam];
+  const usedCoins = Object.values(teamBets).reduce((a, b) => a + b, 0);
+  const curBet = teamBets[selHorse] || 0;
+  const remain = totalCoins - usedCoins + curBet;
+  slider.max = remain;
+  slider.value = curBet;
+  const percent = remain > 0 ? (curBet / remain) * 100 : 0;
+  slider.style.background = `linear-gradient(to right, var(--gold) ${percent}%, var(--border) ${percent}%)`;
+}
+
+
+function confirmTeam() {
+  if (curTeam < 0) return;
+  raceBets[curTeam] = { ...teamBets };
+  raceConfirmed.add(curTeam);
+  curTeam = -1;
+  selHorse = -1;
+  teamBets = {};
+  buildBettingScreen();
+  buildOddsBoard();
+}
+
+function resetTeam() {
+  if (curTeam < 0) return;
+  teamBets = {};
+  selHorse = -1;
+  buildBetPanel();
+}
+
+function calcOdds() {
+  const coins = Array(raceHorses.length).fill(0);
+  Object.values(raceBets).forEach(tb => {
+    Object.entries(tb).forEach(([hi, c]) => {
+      coins[parseInt(hi)] += c;
+    });
+  });
+  const total = coins.reduce((a, b) => a + b, 0);
+  const odds = coins.map(c => (c > 0 ? (total / c).toFixed(1) : '---'));
+  return { odds, coins, total };
+}
+
+function buildOddsBoard() {
+  const { odds, coins, total } = calcOdds();
+  const el = document.getElementById('odds-list');
+  el.innerHTML = '';
+  raceHorses.forEach((h, i) => {
+    const pct = total > 0 ? Math.round(coins[i] / total * 100) : 0;
+    const od = parseFloat(odds[i]);
+    const cls = !isNaN(od) ? (od <= 2 ? 'low' : od >= 5 ? 'high' : '') : '';
+    el.innerHTML += `
+      <div class="odds-row">
+        <div><span class="h-num" style="width:26px;height:26px;font-size:.75rem">${h.num}</span></div>
+        <div style="font-weight:700">${h.name}</div>
+        <div class="odds-val ${cls}">${odds[i]}</div>
+        <div class="dim">${coins[i]}枚</div>
+        <div><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div><div class="dim" style="font-size:.72rem">${pct}%</div></div>
+      </div>`;
+  });
+}
+
+// ════════════════════════════
+//  RACE
+// ════════════════════════════
+function goRace() {
+  document.getElementById('race-title').textContent = RACE_CONFIG[curRace].label;
+  document.getElementById('race-theme').textContent = `お題: ${ROULETTE_DATA[curRace][rouletteResult]}`;
+  timeLeft = RACE_SEC;
+  running = false;
+  document.getElementById('phase-timer').style.display = 'block';
+  document.getElementById('phase-input').style.display = 'none';
+  document.getElementById('race-odds-card').style.display = 'none';
+  document.getElementById('ctrl-row').style.display = 'flex';
+  const display = document.getElementById('timer-display');
+  display.textContent = formatTime(RACE_SEC);
+  display.classList.remove('warn', 'danger');
+  setScreen('race');
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function startAllRace() {
+  running = true;
+  document.getElementById('ctrl-row').style.display = 'none';
+  document.getElementById('race-odds-card').style.display = 'block';
+  buildRaceOddsBoard();
+  timerInt = setInterval(tick, 1000);
+  document.addEventListener('keydown', onSpaceDown);
+  document.addEventListener('keyup', onSpaceUp);
+  const bgm = document.getElementById('race-bgm');
+  bgm.currentTime = 0;
+  bgm.play().catch(err => console.log('BGM autoplay blocked:', err));
+}
+
+function onSpaceDown(e) {
+  if (e.code === 'Space' && !spaceDown && running) {
+    e.preventDefault();
+    spaceDown = true;
+    clearInterval(timerInt);
+    timerInt = setInterval(tick, 100);
+  }
+}
+
+function onSpaceUp(e) {
+  if (e.code === 'Space') {
+    spaceDown = false;
+    clearInterval(timerInt);
+    if (running) timerInt = setInterval(tick, 1000);
+  }
+}
+
+function tick() {
+  timeLeft--;
+  updateTimer();
+  if (timeLeft <= 0) {
+    clearInterval(timerInt);
+    running = false;
+    onTimeUp();
+  }
+}
+
+function updateTimer() {
+  const display = document.getElementById('timer-display');
+  display.textContent = formatTime(timeLeft);
+  
+  // 色の変更
+  display.classList.remove('warn', 'danger');
+  if (timeLeft <= 10) {
+    display.classList.add('danger'); // 10秒以下：赤
+  } else if (timeLeft <= 30) {
+    display.classList.add('warn'); // 30秒以下：黄色
+  }
+}
+
+function buildRaceOddsBoard() {
+  const { odds, coins, total } = calcOdds();
+  const el = document.getElementById('race-odds-list');
+  el.innerHTML = '';
+  raceHorses.forEach((h, i) => {
+    const pct = total > 0 ? Math.round(coins[i] / total * 100) : 0;
+    const od = parseFloat(odds[i]);
+    const cls = !isNaN(od) ? (od <= 2 ? 'low' : od >= 5 ? 'high' : '') : '';
+    el.innerHTML += `
+      <div class="odds-row">
+        <div><span class="h-num" style="width:26px;height:26px;font-size:.75rem">${h.num}</span></div>
+        <div style="font-weight:700">${h.name}</div>
+        <div class="odds-val ${cls}">${odds[i]}</div>
+        <div class="dim">${coins[i]}枚</div>
+        <div><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div><div class="dim" style="font-size:.72rem">${pct}%</div></div>
+      </div>`;
+  });
+}
+
+function onTimeUp() {
+  const bgm = document.getElementById('race-bgm');
+  bgm.pause();
+  bgm.currentTime = 0;
+  document.removeEventListener('keydown', onSpaceDown);
+  document.removeEventListener('keyup', onSpaceUp);
+  const overlay = document.getElementById('goal-overlay');
+  overlay.style.display = 'flex';
+  launchConfetti(false);
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    document.getElementById('phase-timer').style.display = 'none';
+    document.getElementById('phase-input').style.display = 'block';
+    buildScoreInputGrid();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 3000);
+}
+
+function buildScoreInputGrid() {
+  const grid = document.getElementById('score-grid');
+  grid.innerHTML = '';
+  raceHorses.forEach((h, i) => {
+    grid.innerHTML += `
+      <div class="score-card">
+        <span class="h-num">${h.num}</span>
+        <div style="flex:1;font-weight:700">${h.name}</div>
+        <input type="number" id="sc-${i}" value="0" min="0">
+        <span class="dim">問正解</span>
+      </div>`;
+  });
+}
+
+// ════════════════════════════
+//  RACE RESULT
+// ════════════════════════════
+function showRaceResult() {
+  raceResults = [];
+  raceHorses.forEach((h, i) => {
+    const correct = parseInt(document.getElementById(`sc-${i}`)?.value) || 0;
+    raceResults.push({ horseIdx: i, correct });
+  });
+  const sorted = [...raceResults].sort((a, b) => b.correct - a.correct);
+
+  allRaceResults.push({
+    raceLabel: RACE_CONFIG[curRace].label,
+    horses: raceHorses,
+    sorted: sorted,
+    bets: raceBets
+  });
+
+  document.getElementById('rr-race-label').textContent = RACE_CONFIG[curRace].label;
+  buildPodium(sorted);
+  buildRankTable(sorted);
+  calcPayout(sorted);
+  buildCoinsBoard();
+
+  if (curRace < RACE_COUNT - 1) {
+    document.getElementById('next-race-btn').style.display = 'inline-block';
+    document.getElementById('final-btn').style.display = 'none';
+  } else {
+    document.getElementById('next-race-btn').style.display = 'none';
+    document.getElementById('final-btn').style.display = 'inline-block';
+  }
+
+  setScreen('rresult');
+  launchConfetti(true);
+}
+
+function buildPodium(sorted) {
+  const podium = document.getElementById('podium');
+  podium.innerHTML = '';
+  [0, 1, 2].forEach(rank => {
+    if (!sorted[rank]) return;
+    const h = raceHorses[sorted[rank].horseIdx];
+    const medal = rank === 0 ? '🥇' : rank === 1 ? '🥈' : '🥉';
+    const cls = rank === 0 ? 'p1' : rank === 1 ? 'p2' : 'p3';
+    podium.innerHTML += `
+      <div class="podium-place ${cls}">
+        <div class="p-rank">${medal}</div>
+        <div class="p-name">${h.name}</div>
+        <div class="p-score">${sorted[rank].correct}問正解</div>
+      </div>`;
+  });
+}
+
+function buildRankTable(sorted) {
+  const tbody = document.getElementById('rank-tbody');
+  tbody.innerHTML = '';
+  sorted.forEach((s, i) => {
+    const h = raceHorses[s.horseIdx];
+    const rc = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
+    tbody.innerHTML += `<tr class="${rc}">
+      <td>${i + 1}位</td>
+      <td><strong>${h.name}</strong></td>
+      <td>${s.correct}問</td>
+    </tr>`;
+  });
+}
+
+function calcPayout(sorted) {
+  if (sorted.length === 0) return;
+  const winIdx = sorted[0].horseIdx;
+  const { odds } = calcOdds();
+  const winOdds = parseFloat(odds[winIdx]);
+
+  for (let t = 0; t < TEAM_COUNT; t++) {
+    const tb = raceBets[t] || {};
+    const betOnWin = tb[winIdx] || 0;
+    const totalBet = Object.values(tb).reduce((a, b) => a + b, 0);
+
+    if (betOnWin > 0 && !isNaN(winOdds)) {
+      const payout = Math.floor(betOnWin * winOdds);
+      teamHoldings[t] = teamHoldings[t] - totalBet + payout;
+    } else {
+      teamHoldings[t] = teamHoldings[t] - totalBet;
+    }
+  }
+
+  const list = document.getElementById('payout-list');
+  list.innerHTML = '';
+  for (let t = 0; t < TEAM_COUNT; t++) {
+    const tb = raceBets[t] || {};
+    const betOnWin = tb[winIdx] || 0;
+    const totalBet = Object.values(tb).reduce((a, b) => a + b, 0);
+    if (totalBet === 0) continue;
+
+    let msg = '';
+    let cls = '';
+    if (betOnWin > 0 && !isNaN(winOdds)) {
+      const payout = Math.floor(betOnWin * winOdds);
+      const net = payout - totalBet;
+      msg = `+${net}枚（配当${payout}枚 − 賭け${totalBet}枚）`;
+      cls = 'win';
+    } else {
+      msg = `ハズレ（-${totalBet}枚）`;
+      cls = 'lose';
+    }
+
+    list.innerHTML += `
+      <div class="payout-card">
+        <div class="payout-team">${t + 1}班</div>
+        <div class="payout-amount ${cls}">${msg}</div>
+      </div>`;
+  }
+}
+
+function buildCoinsBoard() {
+  const board = document.getElementById('coins-board');
+  board.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:12px">';
+  teamHoldings.forEach((c, i) => {
+    board.innerHTML += `
+      <div style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-weight:700;margin-bottom:4px">${i + 1}班</div>
+        <div style="color:var(--gold);font-size:1.3rem;font-weight:900">${c}枚</div>
+      </div>`;
+  });
+  board.innerHTML += '</div>';
+}
+
+function nextRace() {
+  curRace++;
+  init();
+}
+
+function showFinalResult() {
+  const teamRanking = teamHoldings.map((coins, i) => ({
+    team: i + 1,
+    coins: coins,
+    gain: coins - COINS_EACH
+  })).sort((a, b) => b.coins - a.coins);
+
+  const winner = teamRanking[0];
+  document.getElementById('final-champ-team').textContent = `${winner.team}班`;
+  document.getElementById('final-champ-coins').textContent = winner.coins;
+
+  const teamTbody = document.getElementById('final-team-tbody');
+  teamTbody.innerHTML = '';
+  teamRanking.forEach((t, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}位`;
+    const rc = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
+    const gainStr = t.gain >= 0 ? `+${t.gain}` : `${t.gain}`;
+    const gainColor = t.gain > 0 ? 'color:var(--green-light)' : t.gain < 0 ? 'color:var(--red)' : '';
+    teamTbody.innerHTML += `<tr class="${rc}">
+      <td>${medal}</td>
+      <td><strong>${t.team}班</strong></td>
+      <td style="color:var(--gold);font-weight:700">${t.coins}枚</td>
+      <td class="dim">${COINS_EACH}枚</td>
+      <td style="${gainColor};font-weight:700">${gainStr}</td>
+    </tr>`;
+  });
+
+  const tbody = document.getElementById('final-tbody');
+  tbody.innerHTML = '';
+  allRaceResults.forEach(rr => {
+    const s = rr.sorted;
+    const n = (idx) => s[idx] ? rr.horses[s[idx].horseIdx].name + `(${s[idx].correct}問)` : '---';
+    tbody.innerHTML += `<tr>
+      <td>${rr.raceLabel}</td>
+      <td class="r1"><strong>${n(0)}</strong></td>
+      <td>${s[0]?.correct || 0}問</td>
+      <td class="r2">${n(1)}</td>
+      <td class="r3">${n(2)}</td>
+    </tr>`;
+  });
+
+  setScreen('final');
+  launchConfetti(true);
+}
+
+// ════════════════════════════
+//  UTILS
+// ════════════════════════════
+function setScreen(name) {
+  const map = { config: 'scr-config', 'race-config': 'scr-race-config', setup: 'scr-setup', roulette: 'scr-roulette', bet: 'scr-bet', race: 'scr-race', rresult: 'scr-rresult', final: 'scr-final' };
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(map[name]).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function launchConfetti(big = false) {
+  const duration = big ? 5000 : 3000;
+  const count = big ? 200 : 100;
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => createConfetti(), Math.random() * duration);
+  }
+}
+
+function createConfetti() {
+  const confetti = document.createElement('div');
+  confetti.textContent = ['🎉', '🎊', '✨', '⭐', '🌟'][Math.floor(Math.random() * 5)];
+  confetti.style.position = 'fixed';
+  confetti.style.left = Math.random() * 100 + 'vw';
+  confetti.style.top = '-50px';
+  confetti.style.fontSize = (Math.random() * 20 + 20) + 'px';
+  confetti.style.zIndex = '9999';
+  confetti.style.pointerEvents = 'none';
+  document.body.appendChild(confetti);
+  const fall = confetti.animate([
+    { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+    { transform: `translateY(${window.innerHeight + 100}px) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0 }
+  ], {
+    duration: Math.random() * 2000 + 3000,
+    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+  });
+  fall.onfinish = () => confetti.remove();
+}
+
+function restartAll() {
+  location.reload();
+}
+
+// ════════════════════════════
+//  PWA - Service Worker
+// ════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('PWA: Service Worker registered'))
+      .catch(err => console.log('PWA: Service Worker registration failed'));
+  });
+}
+</script>
+
+</body>
+</html>
