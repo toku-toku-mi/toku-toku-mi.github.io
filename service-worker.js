@@ -1,30 +1,28 @@
-const CACHE_NAME = 'quiz-derby-v1';
+const CACHE_NAME = 'quiz-derby-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json'
 ];
-
 // インストール時
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
   );
+  // 即座に新しいSWを有効化
+  self.skipWaiting();
 });
-
 // リクエスト時
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // キャッシュがあればそれを返す、なければネットワークから取得
         return response || fetch(event.request);
       })
   );
 });
-
-// アップデート時
+// アップデート時：古いキャッシュを全部削除
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -35,6 +33,6 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim()) // 既存のページにも即適用
   );
 });
