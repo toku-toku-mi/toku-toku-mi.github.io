@@ -655,6 +655,80 @@ body {
   font-weight: 900;
   font-family: 'Kaisei Decol', serif;
 }
+/* PRESET */
+.preset-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.preset-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--dark);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: border-color .2s;
+}
+.preset-item:hover { border-color: var(--gold); }
+.preset-name {
+  flex: 1;
+  font-weight: 700;
+}
+.preset-meta {
+  font-size: .8rem;
+  color: var(--text-dim);
+}
+.preset-load-btn {
+  padding: 6px 14px;
+  background: var(--gold);
+  color: var(--dark);
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: .85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+}
+.preset-load-btn:hover { background: #ffd700; }
+.preset-del-btn {
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--red);
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: all .15s;
+}
+.preset-del-btn:hover { background: rgba(248,81,73,.1); }
+.save-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.save-modal.open { display: flex; }
+.save-modal-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  width: min(90vw, 420px);
+}
+.save-modal-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
 /* SLIDER */
 #coin-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -835,6 +909,15 @@ body {
 
   <!-- ═══ SCREEN: CONFIG ═══ -->
   <div class="screen active" id="scr-config">
+
+    <!-- 保存済みプリセット -->
+    <div class="card" id="preset-card">
+      <div class="card-title">📁 保存済みプリセット</div>
+      <div id="preset-list-area">
+        <div style="color:var(--text-dim);font-size:.9rem">保存済みプリセットはまだありません</div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="card-title">⚙️ ゲーム設定</div>
       
@@ -871,6 +954,7 @@ body {
       <div id="race-config-list"></div>
       <div class="btn-row">
         <button class="btn btn-gold" onclick="finishRaceConfig()">設定完了：ゲーム開始</button>
+        <button class="btn btn-ghost" onclick="openSaveModal()">💾 この設定を保存</button>
         <button class="btn btn-ghost" onclick="backToConfig()">戻る</button>
       </div>
     </div>
@@ -1062,7 +1146,18 @@ body {
 
 </div>
 
-<script>
+<!-- 保存モーダル -->
+<div class="save-modal" id="save-modal">
+  <div class="save-modal-box">
+    <div class="save-modal-title">💾 プリセットを保存</div>
+    <div style="color:var(--text-dim);font-size:.85rem;margin-bottom:12px">名前をつけて保存します</div>
+    <input type="text" class="config-input" id="preset-name-input" placeholder="例：春の大会用、社内イベント用" maxlength="30">
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-gold" onclick="savePreset()">保存する</button>
+      <button class="btn btn-ghost" onclick="closeSaveModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
 // ════════════════════════════
 //  お題候補プール（ルーレットに乗るお題名）
 // ════════════════════════════
@@ -1087,6 +1182,116 @@ const TOPIC_POOL = {
     '宝くじ当たったらやること',
   ],
 };
+
+// ════════════════════════════
+//  PRESET SAVE / LOAD
+// ════════════════════════════
+const PRESET_KEY = 'quiz_derby_presets';
+
+function loadPresets() {
+  try { return JSON.parse(localStorage.getItem(PRESET_KEY)) || []; }
+  catch { return []; }
+}
+
+function savePresets(list) {
+  localStorage.setItem(PRESET_KEY, JSON.stringify(list));
+}
+
+function renderPresetList() {
+  const list = loadPresets();
+  const area = document.getElementById('preset-list-area');
+  if (list.length === 0) {
+    area.innerHTML = '<div style="color:var(--text-dim);font-size:.9rem">保存済みプリセットはまだありません</div>';
+    return;
+  }
+  area.innerHTML = '<div class="preset-list">' + list.map((p, i) => `
+    <div class="preset-item">
+      <div style="flex:1">
+        <div class="preset-name">${p.name}</div>
+        <div class="preset-meta">${p.raceCount}レース・${p.teamCount}班・${p.coinsEach}コイン・${p.raceSec}秒 ／ 保存日: ${p.savedAt}</div>
+      </div>
+      <button class="preset-load-btn" onclick="loadPreset(${i})">読み込む</button>
+      <button class="preset-del-btn" onclick="deletePreset(${i})">削除</button>
+    </div>
+  `).join('') + '</div>';
+}
+
+function openSaveModal() {
+  // まず現在の設定を一時保存（race-config画面のinputを読む）
+  RACE_CONFIG.forEach((rc, i) => {
+    rc.count = parseInt(document.getElementById(`rc-count-${i}`)?.value) || rc.count;
+    rebuildPreview(i);
+  });
+  document.getElementById('preset-name-input').value = '';
+  document.getElementById('save-modal').classList.add('open');
+  document.getElementById('preset-name-input').focus();
+}
+
+function closeSaveModal() {
+  document.getElementById('save-modal').classList.remove('open');
+}
+
+function savePreset() {
+  const name = document.getElementById('preset-name-input').value.trim();
+  if (!name) { alert('名前を入力してください'); return; }
+
+  const preset = {
+    name,
+    raceCount: RACE_COUNT,
+    teamCount: TEAM_COUNT,
+    coinsEach: COINS_EACH,
+    raceSec: RACE_SEC,
+    raceConfig: RACE_CONFIG.map((rc, i) => ({
+      label: rc.label,
+      count: rc.count,
+    })),
+    rouletteData: ROULETTE_DATA.map(d => [...d]),
+    rcChecked: JSON.parse(JSON.stringify(rcChecked)),
+    savedAt: new Date().toLocaleDateString('ja-JP'),
+  };
+
+  const list = loadPresets();
+  list.unshift(preset); // 新しいものを先頭に
+  savePresets(list);
+  closeSaveModal();
+  renderPresetList();
+  alert(`「${name}」を保存しました！`);
+}
+
+function loadPreset(idx) {
+  const list = loadPresets();
+  const p = list[idx];
+  if (!p) return;
+
+  // ゲーム設定を復元
+  RACE_COUNT = p.raceCount;
+  TEAM_COUNT = p.teamCount;
+  COINS_EACH = p.coinsEach;
+  RACE_SEC = p.raceSec;
+
+  // config画面のinputに反映
+  document.getElementById('race-count').value = RACE_COUNT;
+  document.getElementById('team-count').value = TEAM_COUNT;
+  document.getElementById('initial-coins').value = COINS_EACH;
+  document.getElementById('race-time').value = RACE_SEC;
+
+  // レース設定を復元
+  RACE_CONFIG = p.raceConfig.map(rc => ({ ...rc, names: [] }));
+  ROULETTE_DATA = p.rouletteData.map(d => [...d]);
+  rcChecked = JSON.parse(JSON.stringify(p.rcChecked || {}));
+
+  buildRaceConfigScreen();
+  setScreen('race-config');
+}
+
+function deletePreset(idx) {
+  const list = loadPresets();
+  const name = list[idx]?.name;
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  list.splice(idx, 1);
+  savePresets(list);
+  renderPresetList();
+}
 
 // ════════════════════════════
 //  HELP & NAVIGATION
@@ -1912,6 +2117,11 @@ function createConfetti() {
 function restartAll() {
   location.reload();
 }
+
+// 起動時にプリセット一覧を表示
+window.addEventListener('DOMContentLoaded', () => {
+  renderPresetList();
+});
 
 // ════════════════════════════
 //  PWA - Service Worker
